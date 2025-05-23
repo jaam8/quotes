@@ -10,7 +10,7 @@ func LogMiddleware(next http.Handler) http.Handler {
 		log.Printf("Request: %s %s", r.Method, r.URL.Path)
 
 		sw := &statusWriter{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(sw, r)
 
 		log.Printf("Response: %s %s %d", r.Method, r.URL.Path, sw.statusCode)
 	})
