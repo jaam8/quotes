@@ -32,12 +32,12 @@ func (h *Handler) CreateQuote(w http.ResponseWriter, r *http.Request) {
 
 	quoteId, err := h.service.CreateQuote(&quote)
 	if err != nil {
-		if errors.Is(err, errs.ErrInvalidQuoteField) {
-			http.Error(w, "invalid quote field", http.StatusUnprocessableEntity)
-			return
-		}
 		if errors.Is(err, errs.ErrInvalidAuthorField) {
 			http.Error(w, "invalid author field", http.StatusUnprocessableEntity)
+			return
+		}
+		if errors.Is(err, errs.ErrInvalidQuoteField) {
+			http.Error(w, "invalid quote field", http.StatusUnprocessableEntity)
 			return
 		}
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -60,7 +60,7 @@ func (h *Handler) GetQuotes(w http.ResponseWriter, r *http.Request) {
 	if authorParam := query.Get("author"); authorParam != "" {
 		author = &authorParam
 	}
-	
+
 	quotes, err := h.service.GetQuotes(author)
 	if err != nil {
 		http.Error(w, "internal server error", http.StatusInternalServerError)

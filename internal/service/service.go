@@ -19,11 +19,11 @@ func NewQuotesService(storageAdapter ports.StorageAdapter) (*QuotesService, erro
 }
 
 func (s *QuotesService) CreateQuote(quote *models.Quote) (uint64, error) {
-	if quote.Quote == "" || quote.Quote == " " {
-		return 0, errs.ErrInvalidQuoteField
-	}
 	if quote.Author == "" || quote.Author == " " {
 		return 0, errs.ErrInvalidAuthorField
+	}
+	if quote.Quote == "" || quote.Quote == " " {
+		return 0, errs.ErrInvalidQuoteField
 	}
 
 	id, err := s.storage.SaveQuote(quote)
