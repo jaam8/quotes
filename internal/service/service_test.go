@@ -33,43 +33,116 @@ func (m *mockStorageAdapter) DeleteQuote(id uint64) error {
 	return args.Error(0)
 }
 
-func TestCreateQuote_ValidInput(t *testing.T) {
-	//testcases := []struct {
-	//	name        string
-	//	mockSetup   func(*mockStorageAdapter)
-	//	exceptedErr error
-	//}{
-	//	{
-	//		name:        "success",
-	//		exceptedErr: nil,
-	//	},
-	//	{
-	//		name:        "invalid_quote",
-	//		exceptedErr: errs.ErrInvalidQuoteField,
-	//	},
-	//	{
-	//		name:        "invalid_author",
-	//		exceptedErr: errs.ErrInvalidAuthorField,
-	//	},
-	//}
+func TestCreateQuote(t *testing.T) {
+	testcases := []struct {
+		name        string
+		quote       *models.Quote
+		exceptedId  uint64
+		mockSetup   func(*mockStorageAdapter)
+		exceptedErr error
+	}{
+		{
+			name:       "success",
+			exceptedId: 1,
+			quote: &models.Quote{
+				Author: "author",
+				Quote:  "quote",
+			},
+			mockSetup: func(adapter *mockStorageAdapter) {
+				quote := &models.Quote{
+					Author: "author",
+					Quote:  "quote",
+				}
+				adapter.On("SaveQuote", quote).Return(uint64(1), nil)
+			},
+			exceptedErr: nil,
+		},
+		{
+			name: "invalid_quote",
+			quote: &models.Quote{
+				Author: "author",
+				Quote:  "",
+			},
+			mockSetup:   func(adapter *mockStorageAdapter) {},
+			exceptedErr: errs.ErrInvalidQuoteField,
+		},
+		{
+			name: "invalid_author",
+			quote: &models.Quote{
+				Author: "",
+				Quote:  "quote",
+			},
+			mockSetup:   func(adapter *mockStorageAdapter) {},
+			exceptedErr: errs.ErrInvalidAuthorField,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			storageAdapter := new(mockStorageAdapter)
+			tc.mockSetup(storageAdapter)
+
+			service, err := NewQuotesService(storageAdapter)
+			require.NoError(t, err)
+
+			quoteId, err := service.CreateQuote(tc.quote)
+
+			assert.ErrorIs(t, err, tc.exceptedErr)
+
+			if tc.exceptedErr == nil {
+				assert.NotNil(t, quoteId)
+				assert.Equal(t, quoteId, tc.exceptedId)
+			}
+
+			storageAdapter.AssertExpectations(t)
+		})
+
+	}
 }
 
-func TestGetQuotes_Success(t *testing.T) {
-	//testcases := []struct {
-	//	name        string
-	//	author      *string
-	//	mockSetup   func(*mockStorageAdapter)
-	//	exceptedErr error
-	//}{
-	//	{
-	//		name:        "success_by_author",
-	//		exceptedErr: nil,
-	//	},
-	//	{
-	//		name:        "success_by_id",
-	//		exceptedErr: nil,
-	//	},
-	//}
+func TestGetQuotes(t *testing.T) {
+	testcases := []struct {
+		name        string
+		author      *string
+		mockSetup   func(*mockStorageAdapter)
+		exceptedErr error
+	}{
+		{
+			name:   "success_by_author",
+			author: func(s string) *string { return &s }("author"),
+			mockSetup: func(adapter *mockStorageAdapter) {
+				var author = "author"
+				adapter.On("GetQuotes", &author).Return([]*models.Quote{}, nil)
+			},
+			exceptedErr: nil,
+		},
+		{
+			name:   "success_by_id",
+			author: nil,
+			mockSetup: func(adapter *mockStorageAdapter) {
+				var author *string
+				adapter.On("GetQuotes", author).Return([]*models.Quote{}, nil)
+			},
+			exceptedErr: nil,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			storageAdapter := new(mockStorageAdapter)
+			tc.mockSetup(storageAdapter)
+
+			service, err := NewQuotesService(storageAdapter)
+			require.NoError(t, err)
+
+			quotes, err := service.GetQuotes(tc.author)
+			assert.ErrorIs(t, err, tc.exceptedErr)
+
+			if tc.exceptedErr == nil {
+				assert.NotNil(t, quotes)
+			}
+
+			storageAdapter.AssertExpectations(t)
+		})
+	}
 }
 
 func TestGetRandomQuote(t *testing.T) {
