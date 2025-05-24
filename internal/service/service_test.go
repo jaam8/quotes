@@ -189,7 +189,7 @@ func TestGetRandomQuote(t *testing.T) {
 				anotherQuote, err := service.GetRandomQuote()
 				assert.ErrorIs(t, err, tc.exceptedErr)
 
-				for quote.Id == anotherQuote.Id {
+				for i := 0; i < 5 && quote.Id == anotherQuote.Id; i++ {
 					anotherQuote, err = service.GetRandomQuote()
 					assert.ErrorIs(t, err, tc.exceptedErr)
 				}
